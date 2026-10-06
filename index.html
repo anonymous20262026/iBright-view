@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>iBright-GS: Immediate Bright Gaussian Reconstruction from Low-Light Views</title>
+  <meta name="robots" content="noindex">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@400;600;700&family=Source+Serif+4:opsz,wght@8..60,500;8..60,650;8..60,700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js",
+      "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/",
+      "@sparkjsdev/spark": "https://sparkjs.dev/releases/spark/2.1.0/spark.module.js"
+    }
+  }
+  </script>
+</head>
+<body>
+  <header class="hero wrap">
+    <div class="kicker"><span>Under review</span><span>Anonymous project page</span></div>
+    <h1>iBright-GS: Immediate Bright Gaussian Reconstruction from Low-Light Views</h1>
+    <p class="authors">Anonymous authors</p>
+    <nav class="links">
+      <a href="#abstract">Abstract</a>
+      <a href="#viewer-card">Interactive 3D</a>
+      <a href="#results">Results</a>
+      <a href="https://anonymous.4open.science/r/iBright-GS" target="_blank" rel="noopener">Code</a>
+      <a href="#bibtex">BibTeX</a>
+    </nav>
+    <p class="lede">
+      <b>iBright-GS</b> reconstructs a directly renderable bright 3D Gaussian scene from unordered low-light views only.
+      Normal-exposure images are never used in training. Drag the viewer to inspect any novel view.
+    </p>
+  </header>
+
+  <div class="wrap" id="viewer-card">
+    <div class="viewer-card">
+      <div class="viewer-toolbar">
+        <div class="toolbar-group">
+          <label>Scene</label>
+          <div id="scene-tabs"></div>
+        </div>
+        <div class="toolbar-group">
+          <label>Appearance</label>
+          <button class="chip active" id="btn-bright" type="button">Bright</button>
+          <button class="chip" id="btn-dark" type="button">Dark</button>
+        </div>
+      </div>
+      <div id="viewer">
+        <div id="viewer-status">Loading Gaussians…</div>
+      </div>
+    </div>
+    <p class="hint">Drag to orbit · scroll to zoom · right-drag to pan. Renderer is Spark (same family as SuperSplat). Bright/Dark share geometry; only SH0 appearance changes.</p>
+  </div>
+
+  <section class="wrap" id="teaser-video">
+    <h2>Orbit previews</h2>
+    <p class="caption" style="text-align:center">Same camera path. Left: iBright-GS bright Gaussians. Right: a comparison method.</p>
+    <div class="tabs" id="video-tabs"></div>
+    <div class="toolbar-group" style="justify-content:center;margin-bottom:12px">
+      <label for="video-method">Compare against</label>
+      <select class="chip" id="video-method">
+        <option value="i3dgs">i3DGS (dark fit)</option>
+        <option value="retinexgs" selected>RetinexGS</option>
+        <option value="lita-gs">LITA-GS</option>
+        <option value="llgs">LLGS</option>
+        <option value="luminance-gs">Luminance-GS</option>
+        <option value="3dgs">3DGS</option>
+      </select>
+    </div>
+    <div class="video-pair">
+      <figure class="card ours">
+        <video id="video-ours" muted loop playsinline autoplay controls></video>
+        <figcaption>iBright-GS</figcaption>
+      </figure>
+      <figure class="card">
+        <video id="video-base" muted loop playsinline autoplay controls></video>
+        <figcaption>Baseline</figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <section class="wrap" id="abstract">
+    <h2>Abstract</h2>
+    <p class="abstract">
+      Training 3D Gaussian Splatting exclusively on low-light images anchors the learned appearance to dark observations, which leads to persistently dim novel-view renderings even when the geometry is fully recovered. To tackle this issue, we propose iBright-GS, a framework that learns bright-view Gaussian appearance representations solely from low-light multi-view inputs. It first stabilizes geometric optimization via raw low-light photometric constraints to preserve the intrinsic dark appearance distribution of inputs and avoid premature photometric drift that degrades geometric fidelity. A unified training-stage bright signal is then constructed by synergistically combining a curve- and LUT-based pseudo-bright target, a dark-render brightening branch, per-Gaussian local gain, global exposure lock, and multi-view consistency. After geometry converges to a stable state with negligible structural perturbation, the constructed bright signal guides the optimization of dedicated bright Gaussian appearance coefficients. The learned bright representation can be directly rasterized at inference without additional post-processing, view-specific adjustment, or reference guidance. Extensive evaluations on LOM and RealX3D benchmarks illustrate that iBright-GS achieves state-of-the-art average PSNR and SSIM performance, with substantially higher runtime efficiency than existing advanced offline low-light 3DGS baselines.
+    </p>
+    <div class="metrics">
+      <div class="metric"><b>23.63</b><span>LOM PSNR (dB)</span></div>
+      <div class="metric"><b>18.77</b><span>RealX3D PSNR (dB)</span></div>
+      <div class="metric"><b>0:22</b><span>LOM time / scene</span></div>
+      <div class="metric"><b>1:31</b><span>RealX3D time / scene</span></div>
+    </div>
+  </section>
+
+  <section class="wrap" id="teaser">
+    <h2>Teaser</h2>
+    <figure class="fig">
+      <img src="assets/figures/fg3.jpg" alt="iBright-GS teaser comparing novel views and PSNR/SSIM">
+      <figcaption class="caption">From low-light inputs, iBright-GS reconstructs bright Gaussian appearance for normal-brightness novel-view rendering, while staying in the immediate-reconstruction regime.</figcaption>
+    </figure>
+  </section>
+
+  <section class="wrap" id="method">
+    <h2>Method overview</h2>
+    <figure class="fig">
+      <img src="assets/figures/fg1.jpg" alt="iBright-GS pipeline">
+      <figcaption class="caption">Low-light views drive pose estimation, geometry, and dark Gaussians. A training-time bright signal then supervises independent bright SH0 coefficients on frozen geometry. Inference rasterizes the bright Gaussians directly.</figcaption>
+    </figure>
+    <div class="two">
+      <figure class="fig">
+        <img src="assets/figures/fg2.jpg" alt="Dual-appearance Gaussians">
+        <figcaption class="caption">Dark and bright branches share geometry, opacity, and higher-order SH. Only SH0/DC is duplicated for normal-brightness rendering.</figcaption>
+      </figure>
+      <figure class="fig">
+        <img src="assets/figures/quality_speed_tradeoff.jpg" alt="Quality versus speed">
+        <figcaption class="caption">Quality–speed tradeoff on LOM + RealX3D. iBright-GS leaves the dark-fitting cluster without leaving the immediate-reconstruction time regime.</figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <section class="wrap" id="results">
+    <h2>Qualitative comparisons</h2>
+    <p class="caption" style="text-align:center">Held-out novel views. Training uses low-light images only; GT is normal-light evaluation.</p>
+    <div class="tabs" id="compare-tabs"></div>
+    <div class="grid-compare" id="compare-grid"></div>
+  </section>
+
+  <section class="wrap" id="numbers">
+    <h2>Quantitative comparison</h2>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th rowspan="2">Method</th>
+            <th colspan="4">LOM</th>
+            <th colspan="4">RealX3D</th>
+          </tr>
+          <tr>
+            <th>PSNR↑</th><th>SSIM↑</th><th>LPIPS↓</th><th>Time</th>
+            <th>PSNR↑</th><th>SSIM↑</th><th>LPIPS↓</th><th>Time</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td class="method">3DGS</td><td>6.74</td><td>0.137</td><td>0.603</td><td>2:01</td><td>6.60</td><td>0.061</td><td>0.691</td><td>3:17</td></tr>
+          <tr><td class="method">i3DGS</td><td>6.79</td><td>0.136</td><td>0.579</td><td class="best">0:04</td><td>6.60</td><td>0.056</td><td>0.694</td><td class="best">0:07</td></tr>
+          <tr><td class="method">LLGS</td><td>17.74</td><td>0.783</td><td>0.330</td><td>4:02</td><td>12.35</td><td>0.493</td><td>0.609</td><td>6:09</td></tr>
+          <tr><td class="method">Luminance-GS</td><td>18.69</td><td>0.784</td><td>0.310</td><td>6:54</td><td>14.54</td><td class="second">0.514</td><td>0.489</td><td>18:27</td></tr>
+          <tr><td class="method">LITA-GS</td><td>20.16</td><td>0.792</td><td>0.304</td><td>27:25</td><td class="second">15.33</td><td>0.510</td><td>0.480</td><td>81:35</td></tr>
+          <tr><td class="method">RetinexGS</td><td class="second">21.09</td><td class="best">0.823</td><td class="best">0.257</td><td>12:06</td><td>13.04</td><td>0.513</td><td class="second">0.477</td><td>20:01</td></tr>
+          <tr><td class="method">iBright-GS</td><td class="best">23.63</td><td class="second">0.819</td><td class="second">0.288</td><td class="second">0:22</td><td class="best">18.77</td><td class="best">0.646</td><td class="best">0.475</td><td class="second">1:31</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="caption">Best in bold, second-best underlined. Runtime is per-scene wall-clock time on RTX 4090.</p>
+  </section>
+
+  <section class="wrap" id="ablation">
+    <h2>Ablation</h2>
+    <p class="caption" style="text-align:center">RealX3D <i>GearWorks</i>. Removing the bright SH0 branch collapses back to dark fitting.</p>
+    <div class="grid-compare" id="ablation-grid"></div>
+  </section>
+
+  <section class="wrap" id="resources">
+    <h2>Resources</h2>
+    <p class="caption" style="text-align:center">Anonymous artifacts for review. Paper PDF can be attached here after upload.</p>
+    <div class="res-row">
+      <a class="chip" href="https://anonymous.4open.science/r/iBright-GS" style="color:#1c1917;background:#fff7ed;border:1px solid #fed7aa">Anonymous code</a>
+    </div>
+  </section>
+
+  <section class="wrap" id="bibtex">
+    <h2>Citation</h2>
+    <pre>@inproceedings{ibrightgs,
+  title     = {iBright-GS: Immediate Bright Gaussian Reconstruction from Low-Light Views},
+  author    = {Anonymous},
+  booktitle = {Under review},
+  year      = {2026}
+}</pre>
+  </section>
+
+  <footer>
+    <div class="wrap">
+      iBright-GS · Anonymous authors · Project page for double-blind review.<br>
+      Built from low-light-only reconstructions; interactive viewer uses SH0 web PLYs.
+    </div>
+  </footer>
+
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>

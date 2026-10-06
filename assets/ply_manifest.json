@@ -1,0 +1,50 @@
+{
+  "sofa/bright": {
+    "vertices": 61049,
+    "size_mb": 14.41
+  },
+  "sofa/dark": {
+    "vertices": 61049,
+    "size_mb": 14.41
+  },
+  "bike/bright": {
+    "vertices": 63362,
+    "size_mb": 14.95
+  },
+  "bike/dark": {
+    "vertices": 63362,
+    "size_mb": 14.95
+  },
+  "BlueHawaii/bright": {
+    "vertices": 340000,
+    "size_mb": 80.24
+  },
+  "BlueHawaii/dark": {
+    "vertices": 340000,
+    "size_mb": 80.24
+  },
+  "Cupcake/bright": {
+    "vertices": 340000,
+    "size_mb": 80.24
+  },
+  "Cupcake/dark": {
+    "vertices": 340000,
+    "size_mb": 80.24
+  },
+  "Sculpture/bright": {
+    "vertices": 340000,
+    "size_mb": 84.32
+  },
+  "Sculpture/dark": {
+    "vertices": 340000,
+    "size_mb": 80.24
+  },
+  "GearWorks/bright": {
+    "vertices": 340000,
+    "size_mb": 80.24
+  },
+  "GearWorks/dark": {
+    "vertices": 340000,
+    "size_mb": 80.24
+  }
+}
